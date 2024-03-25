@@ -1,17 +1,18 @@
-import {Deck} from './deck0-0-0.js'
+import {Deck, DestinationDecks} from './deck0-0-0.js'
 
 export class LayoverGame {
     constructor() {
         // create an array of 52 numbers
-        this.deck = Array.from({length: 52}, (v, k) => k);
-        this.shuffleDeck()
+        this.deck = Array.from({length: Deck.length}, (v, k) => k);
+        this.destinationDecks = []
+        this.shuffle(this.deck)
         this.numberOfPlayers = 4
         this.startingHandSize = 4
         this.sharedCardSize = 3
         this.hands = []
+        this.destinationHands = []
+        this.playedCardHands = []
         this.sharedCards = []
-
-        console.log(Deck)
     }
 
     start() {
@@ -21,6 +22,17 @@ export class LayoverGame {
                 hand.push(this.deck.pop())
             }
             this.hands.push(hand)
+
+            const destinationDeck = Array.from({length: DestinationDecks[player].length}, (v, k) => k)
+            this.shuffle(destinationDeck)
+
+            const destinationHand = []
+            destinationHand.push(destinationDeck.pop())
+            destinationHand.push(destinationDeck.pop())
+            console.log(destinationHand, destinationDeck)
+
+            this.destinationDecks.push(destinationDeck)
+            this.destinationHands.push(destinationHand)
         }
 
         for (let i = 0; i < this.sharedCardSize; i++) {
@@ -39,11 +51,11 @@ export class LayoverGame {
         }
     }
 
-    shuffleDeck() {
+    shuffle(deck) {
         // Fisher-Yates shuffle
-        for (let i = this.deck.length - 1; i > 0; i--) {
+        for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+            [deck[i], deck[j]] = [deck[j], deck[i]];
         }
     }
 

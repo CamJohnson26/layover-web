@@ -1,4 +1,4 @@
-import { Deck } from './deck0-0-0.js';
+import {Deck, DestinationDecks} from './deck0-0-0.js';
 
 export class LayoverGraphics {
 
@@ -10,6 +10,9 @@ export class LayoverGraphics {
         this.colors = {
             // light gray
             backgroundColor: '#D0D0D0',
+            layoverColor: '#E261D5',
+            skipColor: '#555555',
+            destinationColor: '#FFFFFF'
         }
     }
 
@@ -22,7 +25,16 @@ export class LayoverGraphics {
 
         let index = 0;
         for (const hand of game.hands) {
-            this.drawHand(hand, index)
+            const cardGroups = [
+                {
+                    cards: hand,
+                    deck: Deck
+                }, {
+                    cards: game.destinationHands[index],
+                    deck: DestinationDecks[index]
+                }
+            ]
+            this.drawHand(cardGroups, index)
             index++
         }
 
@@ -37,7 +49,9 @@ export class LayoverGraphics {
     }
 
     // Position, int 0 to 4, clockwise from bottom
-    drawHand(hand, position) {
+    drawHand(cardGroups, position) {
+
+        const handLength = cardGroups.reduce((acc, val) => acc + val.cards.length, 0)
 
         const isBottom = position === 0;
         const isLeft = position === 1;
@@ -52,8 +66,8 @@ export class LayoverGraphics {
         const marginSize = 50
         const cardWidth = 50
         const cardHeight = 100
-        const handWidth = isHorizontal ? hand.length * cardWidth : cardWidth;
-        const handHeight = isVertical ? hand.length * cardHeight : cardHeight;
+        const handWidth = isHorizontal ? handLength * cardWidth : cardWidth;
+        const handHeight = isVertical ? handLength * cardHeight : cardHeight;
 
         const xPos = isVertical ?
             isLeft ? marginSize : width - marginSize - handWidth
@@ -63,27 +77,45 @@ export class LayoverGraphics {
             : (height - handHeight) / 2;
 
         let index = 0;
-        for (const card of hand) {
-            const cardXPos = isHorizontal ? xPos + index * cardWidth : xPos;
-            const cardYPos = isVertical ? yPos + index * cardHeight : yPos;
+        for (const cardGroup of cardGroups) {
+            for (const card of cardGroup.cards) {
+                const cardXPos = isHorizontal ? xPos + index * cardWidth : xPos;
+                const cardYPos = isVertical ? yPos + index * cardHeight : yPos;
 
-            this.drawCard(Deck[card], cardXPos, cardYPos);
-            index++
+                this.drawCard(cardGroup.deck[card], cardXPos, cardYPos);
+                index++
+            }
         }
 
     }
 
     drawCard(card, xPos, yPos) {
+        switch (card.type) {
+            case 'continent':
+                this.drawContinentCard(card, xPos, yPos);
+                break;
+            case 'layover':
+                this.drawLayoverCard(card, xPos, yPos);
+                break;
+            case 'skip':
+                this.drawSkipCard(card, xPos, yPos);
+                break;
+            case 'destination':
+                this.drawDestinationCard(card, xPos, yPos);
+            default:
+                break;
+
+        }
+    }
+
+    drawContinentCard(card, xPos, yPos) {
+
         // Draw a white rectangle card with a border
         this.ctx.fillStyle = this.getContinentColor(card.continent);
         this.ctx.fillRect(xPos, yPos, 50, 100);
         this.ctx.strokeStyle = "#000000";
+        this.ctx.lineWidth = 1
         this.ctx.strokeRect(xPos, yPos, 50, 100);
-
-        // Draw text
-        this.ctx.fillStyle = "#000000";
-        this.ctx.font = "12px Arial";
-        this.ctx.fillText(card.continent, xPos + 5, yPos + 15);
 
         // Draw connections as colorful rectangles at the bottom of the card
         let connectionIndex = 0;
@@ -91,9 +123,58 @@ export class LayoverGraphics {
             this.ctx.fillStyle = this.getContinentColor(connection);
             this.ctx.fillRect(xPos + connectionIndex * 10, yPos + 80, 10, 10);
             this.ctx.strokeStyle = "#000000";
+            this.ctx.lineWidth = 1
             this.ctx.strokeRect(xPos + connectionIndex * 10, yPos + 80, 10, 10);
             connectionIndex++;
         }
+
+        // Draw text
+        this.ctx.fillStyle = "#000000";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(card.continent, xPos + 5, yPos + 15);
+    }
+
+    drawLayoverCard(card, xPos, yPos) {
+        // Draw a white rectangle card with a border
+        this.ctx.fillStyle = this.colors.layoverColor;
+        this.ctx.fillRect(xPos, yPos, 50, 100);
+        this.ctx.strokeStyle = "#000000";
+        this.ctx.lineWidth = 1
+        this.ctx.strokeRect(xPos, yPos, 50, 100);
+
+        // Draw text
+        this.ctx.fillStyle = "#000000";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText('Layover', xPos + 5, yPos + 15);
+    }
+
+    drawSkipCard(card, xPos, yPos) {
+        // Draw a white rectangle card with a border
+        this.ctx.fillStyle = this.colors.skipColor;
+        this.ctx.fillRect(xPos, yPos, 50, 100);
+        this.ctx.strokeStyle = "#000000";
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(xPos, yPos, 50, 100);
+
+        // Draw text
+        this.ctx.fillStyle = "#FFFFFF";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText('Skip', xPos + 5, yPos + 15);
+    }
+
+    drawDestinationCard(card, xPos, yPos) {
+        // Draw a white rectangle card with a border
+        this.ctx.fillStyle = this.colors.destinationColor;
+        this.ctx.fillRect(xPos, yPos, 50, 100);
+
+        this.ctx.strokeStyle = this.getContinentColor(card.continent);
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeRect(xPos, yPos, 50, 100);
+
+        // Draw text
+        this.ctx.fillStyle = "#000000";
+        this.ctx.font = "12px Arial";
+        this.ctx.fillText(card.continent, xPos + 5, yPos + 15);
     }
 
     getContinentColor(continent) {
