@@ -13,6 +13,13 @@ export class LayoverGame {
         this.destinationHands = []
         this.playedCardHands = []
         this.sharedCards = []
+
+        // Setup the played cards
+        for (const player of Array.from({length: this.numberOfPlayers}, (v, k) => k)) {
+            this.playedCardHands.push([])
+        }
+
+        this.currentPlayerTurn = 0
     }
 
     start() {
@@ -49,6 +56,18 @@ export class LayoverGame {
                 console.log(Deck[card])
             }
         }
+    }
+
+    makeMove() {
+
+        if (this.deck.length === 0) {
+            this.end()
+        }
+        const playCardIndex = Math.floor(Math.random() * this.hands[this.currentPlayerTurn].length)
+
+        this.playedCardHands[this.currentPlayerTurn].push(this.hands[this.currentPlayerTurn].splice(playCardIndex, 1)[0])
+        this.hands[this.currentPlayerTurn].push(this.deck.pop())
+        this.currentPlayerTurn = (this.currentPlayerTurn + 1) % this.numberOfPlayers
     }
 
     shuffle(deck) {

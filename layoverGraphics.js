@@ -22,6 +22,7 @@ export class LayoverGraphics {
         // Draw a red rectangle
         this.ctx.fillStyle = "#FF0000";
         this.drawBackground()
+        this.drawCurrentMove(game)
 
         let index = 0;
         for (const hand of game.hands) {
@@ -46,6 +47,18 @@ export class LayoverGraphics {
             this.drawCard(Deck[card], xPos, yPos);
             index++
         }
+
+        this.drawPlayedCards(game)
+        this.drawDeck(game)
+    }
+
+    drawCurrentMove(game) {
+        const currentPlayer = game.currentPlayerTurn;
+
+        // Draw the number of the current player in the top left corner
+        this.ctx.fillStyle = "#000000";
+        this.ctx.font = "16px Arial";
+        this.ctx.fillText(`Player ${currentPlayer + 1}'s Turn`, 10, 20);
     }
 
     // Position, int 0 to 4, clockwise from bottom
@@ -86,7 +99,49 @@ export class LayoverGraphics {
                 index++
             }
         }
+    }
 
+    drawDeck(game) {
+        // Draw a single black rectangle in the middle, with a number for how many are left
+        const xPos = (this.canvas.width - 50) / 2 - 75;
+        const yPos = (this.canvas.height - 100) / 2 - 75;
+        this.ctx.fillStyle = "#FFFFFF";
+        this.ctx.fillRect(xPos, yPos, 50, 100);
+        this.ctx.fillStyle = "#000000";
+        this.ctx.font = "16px Arial";
+        this.ctx.fillText(`${game.deck.length} cards`, xPos + 5, yPos + 15);
+    }
+
+    drawPlayedCards(game) {
+
+        for (const position of Array.from({length: game.numberOfPlayers}, (v, k) => k)) {
+            const mostRecentCard = game.playedCardHands[position][game.playedCardHands[position].length - 1];
+
+            const isBottom = position === 0;
+            const isLeft = position === 1;
+            const isTop = position === 2;
+            const isRight = position === 3;
+
+            const isVertical = isLeft || isRight;
+            const isHorizontal = isTop || isBottom;
+
+            const width = this.canvas.width;
+            const height = this.canvas.height;
+            const marginSize = 175
+            const cardWidth = 50
+            const cardHeight = 100
+
+            const xPos = isVertical ?
+                isLeft ? marginSize : width - marginSize - cardWidth
+                : (width - cardWidth) / 2;
+            const yPos = isHorizontal ?
+                isTop ? marginSize : height - marginSize - cardHeight
+                : (height - cardHeight) / 2;
+
+            if (mostRecentCard !== undefined) {
+                this.drawCard(Deck[mostRecentCard], xPos, yPos);
+            }
+        }
     }
 
     drawCard(card, xPos, yPos) {
