@@ -49,6 +49,7 @@ export class LayoverGraphics {
         }
 
         this.drawPlayedCards(game)
+        this.drawPlayedDestinationCards(game)
         this.drawDeck(game)
     }
 
@@ -140,6 +141,43 @@ export class LayoverGraphics {
 
             if (mostRecentCard !== undefined) {
                 this.drawCard(Deck[mostRecentCard], xPos, yPos);
+            }
+        }
+    }
+
+    drawPlayedDestinationCards(game) {
+        for (const position of Array.from({length: game.numberOfPlayers}, (v, k) => k)) {
+            let playedCardIndex = 0
+            for (const playedCard of game.playedDestinationHands[position]) {
+                const isBottom = position === 0;
+                const isLeft = position === 1;
+                const isTop = position === 2;
+                const isRight = position === 3;
+
+                const isVertical = isLeft || isRight;
+                const isHorizontal = isTop || isBottom;
+
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                const marginSize = 175
+                const cardWidth = 50
+                const cardHeight = 100
+
+                const xOffset = isVertical ? 0 : 80 + (20 * playedCardIndex);
+                const yOffset = isHorizontal ? 0 : 160 + (20 * playedCardIndex)
+
+                const xPos = isVertical ?
+                    isLeft ? marginSize : width - marginSize - cardWidth
+                    : (width - cardWidth) / 2
+                const yPos = isHorizontal ?
+                    isTop ? marginSize : height - marginSize - cardHeight
+                    : (height - cardHeight) / 2;
+
+                if (playedCard !== undefined) {
+                    this.drawCard(DestinationDecks[position][playedCard], xPos + xOffset, yPos + yOffset);
+                }
+
+                playedCardIndex++
             }
         }
     }
