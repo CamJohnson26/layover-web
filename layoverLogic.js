@@ -38,7 +38,6 @@ export class LayoverGame {
             const destinationHand = []
             destinationHand.push(destinationDeck.pop())
             destinationHand.push(destinationDeck.pop())
-            console.log(destinationHand, destinationDeck)
 
             this.destinationDecks.push(destinationDeck)
             this.destinationHands.push(destinationHand)
@@ -68,7 +67,7 @@ export class LayoverGame {
             let handCardIndex = 0
             for (const cardIndex of this.hands[this.currentPlayerTurn]) {
 
-                if (this.canPlayCard(this.currentPlayerTurn, cardIndex)) {
+                if (this.canPlayCard(this.currentPlayerTurn, Deck[cardIndex])) {
 
                     // If they have a card that matches a destination, play it, otherwise play a random card
                     const handCard = Deck[cardIndex]
@@ -91,21 +90,44 @@ export class LayoverGame {
                 this.playedCardHands[this.currentPlayerTurn].push(this.hands[this.currentPlayerTurn].splice(playCardIndex, 1)[0])
             }
 
+            // Draw a card
+            let candidateSharedCard = undefined;
+            const currentDestinationCards = this.destinationHands[this.currentPlayerTurn].map((destinationCardIndex) => DestinationDecks[this.currentPlayerTurn][destinationCardIndex])
+            for (const sharedCardIndex of this.sharedCards) {
+                if (Deck[sharedCardIndex].type !== 'continent') {
+                    candidateSharedCard = sharedCardIndex
+                }
+                if (Deck[sharedCardIndex].type === 'continent' && candidateSharedCard === undefined
+                    && currentDestinationCards.some((destinationCard) => destinationCard.continent === Deck[sharedCardIndex].continent)
+                    && this.canPlayCard(this.currentPlayerTurn, Deck[sharedCardIndex])
+                ) {
+                    candidateSharedCard = sharedCardIndex
+                }
+            }
+
             const drawnCard = this.deck.pop()
-            if (drawnCard) {
-                this.hands[this.currentPlayerTurn].push(drawnCard)
+            if (candidateSharedCard !== undefined) {
+                this.hands[this.currentPlayerTurn].push(candidateSharedCard)
+                this.sharedCards.splice(this.sharedCards.indexOf(candidateSharedCard), 1)
+                if (drawnCard) {
+                    this.sharedCards.push(drawnCard)
+                }
+            } else {
+                if (drawnCard) {
+                    this.hands[this.currentPlayerTurn].push(drawnCard)
+                }
+
             }
         }
         this.currentPlayerTurn = (this.currentPlayerTurn + 1) % this.numberOfPlayers
     }
 
-    canPlayCard(playerIndex, cardIndex) {
+    canPlayCard(playerIndex, card) {
         const mostRecentCardIndex = this.playedCardHands[playerIndex][this.playedCardHands[playerIndex].length - 1]
         if (mostRecentCardIndex === undefined) {
             return true;
         }
         const lastPlayedCard = Deck[mostRecentCardIndex]
-        const card = Deck[cardIndex]
 
         if (card.type !== 'continent' || lastPlayedCard.type !== 'continent') {
             return true;
@@ -117,8 +139,10 @@ export class LayoverGame {
     playDestination(destinationHandCardIndex, playerIndex) {
         const destinationCard = this.destinationHands[playerIndex].splice(destinationHandCardIndex, 1)[0]
         this.playedDestinationHands[this.currentPlayerTurn].push(destinationCard)
+
         const newDestinationCard = this.destinationDecks[playerIndex].pop()
-        if (newDestinationCard) {
+
+        if (newDestinationCard !== undefined) {
             this.destinationHands[playerIndex].push(newDestinationCard)
         }
     }
